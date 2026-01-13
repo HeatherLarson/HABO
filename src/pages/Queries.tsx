@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LoginArea } from '@/components/auth/LoginArea';
+import { HABOLoginArea } from '@/components/HABOLoginArea';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useNostrPublish } from '@/hooks/useNostrPublish';
 import { useAuthor } from '@/hooks/useAuthor';
@@ -142,7 +142,7 @@ const Queries = () => {
               >
                 Sources
               </button>
-              <LoginArea className="max-w-xs" />
+              <HABOLoginArea className="max-w-xs" />
             </div>
           </div>
         </div>
@@ -249,7 +249,7 @@ const Queries = () => {
           {!user ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
               <p className="text-slate-300">You need to log in to post a query</p>
-              <LoginArea className="max-w-xs" />
+              <HABOLoginArea className="max-w-xs" />
             </div>
           ) : (
             <div className="space-y-6">

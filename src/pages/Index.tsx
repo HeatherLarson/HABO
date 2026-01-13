@@ -2,7 +2,7 @@ import { useSeoMeta } from '@unhead/react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LoginArea } from '@/components/auth/LoginArea';
+import { HABOLoginArea } from '@/components/HABOLoginArea';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { ArrowRight, Zap, Users, Lightbulb } from 'lucide-react';
 
@@ -40,7 +40,7 @@ const Index = () => {
               >
                 Sources
               </button>
-              <LoginArea className="max-w-xs" />
+              <HABOLoginArea className="max-w-xs" />
             </div>
           </div>
         </div>
