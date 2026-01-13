@@ -20,8 +20,8 @@ import type { NostrEvent } from '@nostrify/nostrify';
 
 const Queries = () => {
   useSeoMeta({
-    title: 'Opportunities - HABO',
-    description: 'Browse opportunities for Bitcoin content. Post queries seeking sources and expertise.',
+    title: 'Help Requests - HABO',
+    description: 'Browse help requests from Bitcoin reporters and podcasters. Post your request to find sources and collaborators.',
   });
 
   const { user } = useCurrentUser();
@@ -40,14 +40,14 @@ const Queries = () => {
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Fetch query listings from Nostr (kind 30402 with 'query' tag)
+  // Fetch help request listings from Nostr (kind 30402 with 'request' tag)
   const { data: queries = [], isLoading, refetch } = useQuery({
-    queryKey: ['queries', selectedCategory],
+    queryKey: ['requests', selectedCategory],
     queryFn: async (c) => {
       const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
       const filter: Record<string, unknown> = {
         kinds: [30402],
-        '#t': ['query', 'bitcoin'],
+        '#t': ['request', 'bitcoin'],
         limit: 50,
       };
 
@@ -127,13 +127,13 @@ const Queries = () => {
             </button>
             <div className="flex items-center gap-4">
               <button className="text-amber-400 hover:text-amber-300 transition-colors font-medium text-sm">
-                Opportunities
+                Help Requests
               </button>
               <button
                 onClick={() => navigate('/sources')}
                 className="text-slate-300 hover:text-white transition-colors font-medium text-sm"
               >
-                Expertise
+                Experts
               </button>
               <HABOLoginArea className="max-w-xs" />
             </div>
@@ -146,8 +146,8 @@ const Queries = () => {
         <div className="mb-12">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Opportunities</h1>
-              <p className="text-slate-400">Journalists and creators seeking Bitcoin sources and contributors</p>
+              <h1 className="text-4xl font-bold text-white mb-2">Help Requests</h1>
+              <p className="text-slate-400">Journalists, reporters, and podcasters seeking Bitcoin sources and collaborators</p>
             </div>
             {user && (
               <Button
@@ -155,7 +155,7 @@ const Queries = () => {
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg"
               >
                 <Plus className="w-5 h-5 mr-2" />
-                Post Opportunity
+                Post Help Request
               </Button>
             )}
           </div>
@@ -164,7 +164,7 @@ const Queries = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
             <Input
-              placeholder="Search opportunities..."
+              placeholder="Search help requests..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-500 rounded-lg"
@@ -211,7 +211,7 @@ const Queries = () => {
               <CardContent className="py-16 text-center">
                 <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                 <p className="text-slate-400 text-lg">
-                  {searchTerm ? 'No opportunities match your search.' : 'No opportunities posted yet.'}
+                  {searchTerm ? 'No help requests match your search.' : 'No help requests posted yet.'}
                 </p>
                 {user && !searchTerm && (
                   <Button
@@ -229,27 +229,27 @@ const Queries = () => {
         </div>
       </div>
 
-      {/* Create Query Dialog */}
+      {/* Create Help Request Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Post an Opportunity</DialogTitle>
+            <DialogTitle>Post a Help Request</DialogTitle>
             <DialogDescription>
-              Tell sources what you're looking for. They can respond via direct message on Nostr.
+              Tell experts what help you need. They can respond via direct message on Nostr.
             </DialogDescription>
           </DialogHeader>
 
           {!user ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <p className="text-slate-300">You need to log in to post an opportunity</p>
+              <p className="text-slate-300">You need to log in to post a help request</p>
               <HABOLoginArea className="max-w-xs" />
             </div>
           ) : (
             <div className="space-y-6">
               <div>
-                <label className="text-sm font-semibold text-slate-200 block mb-2">Opportunity Title *</label>
+                <label className="text-sm font-semibold text-slate-200 block mb-2">Request Title *</label>
                 <Input
-                  placeholder="e.g., Bitcoin Lightning Network Expert for Podcast"
+                  placeholder="e.g., Bitcoin Lightning Network Expert Needed for Podcast Episode"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
@@ -267,18 +267,18 @@ const Queries = () => {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-slate-200 block mb-2">Category</label>
+                <label className="text-sm font-semibold text-slate-200 block mb-2">Type of Help Needed</label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg"
                 >
                   <option value="interview">Interview Guest</option>
-                  <option value="podcast">Podcast Contributor</option>
-                  <option value="article">Article Source</option>
-                  <option value="documentary">Documentary Subject</option>
+                  <option value="podcast">Podcast Guest/Contributor</option>
+                  <option value="article">Article Source/Expert</option>
+                  <option value="documentary">Documentary Interview Subject</option>
                   <option value="research">Research Collaboration</option>
-                  <option value="analysis">Technical Analysis</option>
+                  <option value="analysis">Technical/Market Analysis Help</option>
                 </select>
               </div>
 
@@ -287,7 +287,7 @@ const Queries = () => {
                   Detailed Description *
                 </label>
                 <Textarea
-                  placeholder="Describe what you're looking for in detail. What's the project? What expertise do you need? What's the timeline?"
+                  placeholder="Describe what help you need. What's your project? What expertise or perspective are you looking for? What's your timeline?"
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none"
@@ -297,7 +297,7 @@ const Queries = () => {
 
               <div>
                 <label className="text-sm font-semibold text-slate-200 block mb-2">
-                  Response Deadline (Optional)
+                  When Do You Need Help? (Optional)
                 </label>
                 <Input
                   type="date"
@@ -313,7 +313,7 @@ const Queries = () => {
                   disabled={!formData.title.trim() || !formData.content.trim()}
                   className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold"
                 >
-                  Post Opportunity
+                  Post Help Request
                 </Button>
                 <Button
                   onClick={() => setIsCreateDialogOpen(false)}

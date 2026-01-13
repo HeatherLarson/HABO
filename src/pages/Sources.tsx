@@ -21,8 +21,8 @@ import type { NostrEvent } from '@nostrify/nostrify';
 
 const Sources = () => {
   useSeoMeta({
-    title: 'Expertise - HABO',
-    description: 'Discover Bitcoin experts offering their knowledge. Post your expertise to help journalists and creators.',
+    title: 'Experts - HABO',
+    description: 'Discover Bitcoin experts ready to help. Post your expertise to support journalists, reporters, and content creators.',
   });
 
   const { user } = useCurrentUser();
@@ -42,9 +42,9 @@ const Sources = () => {
   });
   const [selectedExpertise, setSelectedExpertise] = useState<string>('all');
 
-  // Fetch source/expertise listings from Nostr (kind 30402 with 'source' tag)
+  // Fetch expert listings from Nostr (kind 30402 with 'source' tag)
   const { data: sources = [], isLoading, refetch } = useQuery({
-    queryKey: ['sources', selectedExpertise],
+    queryKey: ['experts', selectedExpertise],
     queryFn: async (c) => {
       const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
       const filter: Record<string, unknown> = {
@@ -143,10 +143,10 @@ const Sources = () => {
                 onClick={() => navigate('/queries')}
                 className="text-slate-300 hover:text-white transition-colors font-medium text-sm"
               >
-                Opportunities
+                Help Requests
               </button>
               <button className="text-amber-400 hover:text-amber-300 transition-colors font-medium text-sm">
-                Expertise
+                Experts
               </button>
               <HABOLoginArea className="max-w-xs" />
             </div>
@@ -159,8 +159,8 @@ const Sources = () => {
         <div className="mb-12">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Expertise</h1>
-              <p className="text-slate-400">Bitcoin experts offering their knowledge to help content creators</p>
+              <h1 className="text-4xl font-bold text-white mb-2">Experts</h1>
+              <p className="text-slate-400">Bitcoin experts and knowledge holders ready to help journalists and creators</p>
             </div>
             {user && (
               <Button
@@ -168,7 +168,7 @@ const Sources = () => {
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg"
               >
                 <Plus className="w-5 h-5 mr-2" />
-                Post Expertise
+                Post Your Expertise
               </Button>
             )}
           </div>
@@ -177,7 +177,7 @@ const Sources = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
             <Input
-              placeholder="Search expertise..."
+              placeholder="Search experts..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-500 rounded-lg"
@@ -222,14 +222,14 @@ const Sources = () => {
                 <CardContent className="py-16 text-center">
                   <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                   <p className="text-slate-400 text-lg">
-                    {searchTerm ? 'No expertise matches your search.' : 'No expertise listings yet.'}
+                    {searchTerm ? 'No experts match your search.' : 'No expert listings yet.'}
                   </p>
                   {user && (
                     <Button
                       onClick={() => setIsEditDialogOpen(true)}
                       className="mt-6 bg-gradient-to-r from-amber-500 to-orange-500"
                     >
-                      Be the First Expert
+                      Post Your Expertise
                     </Button>
                   )}
                 </CardContent>
@@ -241,25 +241,25 @@ const Sources = () => {
         </div>
       </div>
 
-      {/* Edit Profile Dialog */}
+      {/* Post Expertise Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Post Your Expertise</DialogTitle>
             <DialogDescription>
-              Tell journalists and content creators what you're an expert in and how to reach you.
+              Tell journalists, reporters, and content creators what you can help with and how to reach you.
             </DialogDescription>
           </DialogHeader>
 
           {!user ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <p className="text-slate-300">You need to log in to post expertise</p>
+              <p className="text-slate-300">You need to log in to post your expertise</p>
               <HABOLoginArea className="max-w-xs" />
             </div>
           ) : (
             <div className="space-y-6">
               <div>
-                <label className="text-sm font-semibold text-slate-200 block mb-2">Expertise Title *</label>
+                <label className="text-sm font-semibold text-slate-200 block mb-2">Your Expertise Title *</label>
                 <Input
                   placeholder="e.g., Lightning Network Developer & Educator"
                   value={formData.title}
@@ -271,7 +271,7 @@ const Sources = () => {
               <div>
                 <label className="text-sm font-semibold text-slate-200 block mb-2">Brief Summary</label>
                 <Input
-                  placeholder="One-line professional summary"
+                  placeholder="One-line about what you can help with"
                   value={formData.summary}
                   onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
@@ -280,10 +280,10 @@ const Sources = () => {
 
               <div>
                 <label className="text-sm font-semibold text-slate-200 block mb-2">
-                  Bio & Credentials *
+                  Bio & Background *
                 </label>
                 <Textarea
-                  placeholder="Tell journalists about your expertise, experience, and background..."
+                  placeholder="Tell journalists about your expertise, experience, and background. Why are you qualified to help with content about Bitcoin?"
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none"
@@ -296,13 +296,13 @@ const Sources = () => {
                   Areas of Expertise (comma-separated) *
                 </label>
                 <Input
-                  placeholder="e.g., development, layer2, economics"
+                  placeholder="e.g., development, layer2, economics, mining"
                   value={formData.expertise}
                   onChange={(e) => setFormData({ ...formData, expertise: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
                 />
                 <p className="text-xs text-slate-500 mt-2">
-                  Available: development, economics, mining, layer2, custody, regulations, merchants, history, technical-analysis
+                  Suggested: development, economics, mining, layer2, custody, regulations, merchants, history, technical-analysis
                 </p>
               </div>
 
@@ -338,7 +338,7 @@ const Sources = () => {
                   disabled={!formData.title.trim() || !formData.content.trim() || !formData.expertise.trim()}
                   className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold"
                 >
-                  Post Expertise
+                  Post Your Expertise
                 </Button>
                 <Button
                   onClick={() => setIsEditDialogOpen(false)}
