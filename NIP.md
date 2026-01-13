@@ -1,124 +1,164 @@
-# HABO Nostr Protocol Extensions
+# HABO - Help a Bitcoiner Out
 
-HABO (Help a Bitcoiner Out) defines custom Nostr event kinds for managing queries and sources within the Bitcoin content creator ecosystem.
+HABO is a classified listings marketplace built on Nostr using NIP-99, enabling Bitcoin content creators and experts to post opportunities and respond to each other.
 
-## Event Kinds
+## Overview
 
-### Kind 9802: HABO Query
+HABO uses the NIP-99 classified listings standard (kind 30402) to create a peer-to-peer marketplace where:
 
-A query posted by journalists, reporters, podcasters, and documentarians seeking expert sources for their Bitcoin-related stories.
+- **Journalists/Creators** post listings seeking expert sources and contributors
+- **Experts/Sources** post listings offering their expertise and services
+- Users browse listings, respond to opportunities, and connect via Nostr direct messages
 
-**Kind Range**: 9802 (Regular Event)
+## Implementation Details
 
-**Structure**:
-- `content`: The detailed query description explaining what the author is looking for
-- `tags`:
-  - `title` (required): Short title of the query
-  - `category` (recommended): Category of the query (general, news, interview, podcast, documentary, research, analysis)
-  - `t` (recommended): Tag for relay-level filtering (matches category value)
-  - `deadline` (optional): ISO 8601 date when sources should respond by
+### Using NIP-99 (Kind 30402)
 
-**Example**:
+HABO leverages NIP-99's addressable event structure with the following tag extensions:
+
+#### For Query/Opportunity Listings (seeking expertise)
+
 ```json
 {
-  "kind": 9802,
-  "content": "Looking for an expert on Bitcoin's role in El Salvador for a podcast episode. Need someone who can discuss both technical and economic implications.",
+  "kind": 30402,
+  "content": "Detailed description of what you're looking for...",
   "tags": [
-    ["title", "Bitcoin in El Salvador - Podcast Interview"],
-    ["category", "podcast"],
-    ["t", "podcast"],
-    ["deadline", "2026-01-20"]
+    ["d", "unique-identifier"],
+    ["title", "What you're looking for"],
+    ["summary", "Short tagline"],
+    ["t", "bitcoin"],
+    ["t", "query"],
+    ["category", "interview"],
+    ["deadline", "2026-01-20"],
+    ["published_at", "1736800000"]
   ]
 }
 ```
 
-**Use Cases**:
-- Journalists seeking expert sources
-- Podcasters finding guests
-- Documentary filmmakers identifying interview subjects
-- Content creators finding research contributors
+**Categories for Queries:**
+- `interview` - Looking for interview guests
+- `podcast` - Podcast contributors/guests
+- `research` - Research collaboration
+- `article` - Article sources
+- `documentary` - Documentary subjects
+- `analysis` - Technical/market analysis
 
----
+#### For Source/Expertise Listings (offering services)
 
-### Kind 9803: HABO Source
-
-A profile for an expert source offering their knowledge in Bitcoin-related topics to help journalists and content creators.
-
-**Kind Range**: 9803 (Regular Event)
-
-**Structure**:
-- `content`: Bio, credentials, and areas of expertise overview
-- `tags`:
-  - `expertise` (required, multiple): Areas the source has expertise in
-  - `twitter` (optional): Twitter handle for contact
-  - `website` (optional): Personal website or portfolio URL
-
-**Expertise Areas** (suggested values):
-- development
-- economics
-- mining
-- layer2
-- custody
-- regulations
-- merchants
-- history
-- technical-analysis
-
-**Example**:
 ```json
 {
-  "kind": 9803,
-  "content": "Senior Bitcoin developer with 10+ years of experience building Lightning Network infrastructure. Have contributed to major Bitcoin implementations and love discussing the technical and economic aspects of Bitcoin scaling.",
+  "kind": 30402,
+  "content": "Bio, credentials, and areas of expertise...",
   "tags": [
+    ["d", "unique-identifier"],
+    ["title", "Your expertise areas"],
+    ["summary", "Brief professional summary"],
+    ["t", "bitcoin"],
+    ["t", "source"],
     ["expertise", "development"],
     ["expertise", "layer2"],
-    ["expertise", "economics"],
-    ["twitter", "@bitcoindev"],
-    ["website", "https://bitcoindev.example.com"]
+    ["location", "Online/Your Location"],
+    ["published_at", "1736800000"]
   ]
 }
 ```
 
-**Use Cases**:
-- Building a discoverable source directory for journalists
-- Enabling content creators to find qualified experts
-- Creating searchable expertise profiles
+**Standard Expertise Tags:**
+- `development` - Bitcoin protocol development
+- `economics` - Bitcoin economics and theory
+- `mining` - Mining and hashrate
+- `layer2` - Lightning Network, Sidechains
+- `custody` - Self-custody, key management
+- `regulations` - Regulatory and legal
+- `merchants` - Merchant adoption
+- `history` - Bitcoin history and philosophy
+- `technical-analysis` - Market analysis
 
----
+### Filtering Strategy
 
-## Query Workflow
-
-1. **Source Registration**: An expert creates a kind 9803 event to register as a source, listing their expertise areas
-2. **Query Publication**: A journalist/creator publishes a kind 9802 event describing what they need
-3. **Discovery**: Sources can search and filter queries to find opportunities matching their expertise
-4. **Connection**: Direct messaging (NIP-04/NIP-17) facilitates the connection between journalist and source
-
-## Relay Filtering
-
-Both kinds support efficient relay-level filtering using tags:
+The implementation uses `t` tags for efficient relay-level filtering:
 
 ```typescript
-// Find all podcast queries
+// Find all query listings
 const queries = await nostr.query([
   {
-    kinds: [9802],
-    '#t': ['podcast'],
+    kinds: [30402],
+    '#t': ['query', 'bitcoin'],
   }
 ], { signal });
 
-// Find all sources with mining expertise
-const miningSources = await nostr.query([
+// Find all source listings
+const sources = await nostr.query([
   {
-    kinds: [9803],
+    kinds: [30402],
+    '#t': ['source', 'bitcoin'],
+  }
+], { signal });
+
+// Find sources with specific expertise
+const miningExperts = await nostr.query([
+  {
+    kinds: [30402],
+    '#t': ['source', 'bitcoin'],
     '#expertise': ['mining'],
   }
 ], { signal });
 ```
 
-## Extensibility
+### Distinguishing Queries from Sources
 
-The `tags` array in both kinds is extensible. Additional tags can be added by clients for specific functionality without breaking compatibility with existing implementations.
+The `t` tags are the primary differentiator:
+- Listings with `["t", "query"]` are opportunities being sought
+- Listings with `["t", "source"]` are expertise being offered
+
+Both types use kind 30402, maintaining full NIP-99 compatibility while supporting HABO's dual-listing approach.
+
+## Participation Model
+
+### Creating Listings
+
+Users log in with Nostr and create one of two types:
+
+1. **Query Listings** - Post what you're looking for
+   - Title, summary, description
+   - Category (interview, podcast, research, article, documentary, analysis)
+   - Optional deadline
+   - Marked with `["t", "query"]` tag
+
+2. **Source/Expertise Listings** - Post what you offer
+   - Professional bio and credentials
+   - Areas of expertise (multiple tags)
+   - Location (optional)
+   - Contact links (Twitter, website)
+   - Marked with `["t", "source"]` tag
+
+### Responding to Listings
+
+Users can respond by:
+- Sending Nostr direct messages (NIP-04/NIP-17) to the listing author
+- Connection facilitation through UI with pre-filled context
+
+### Discovery
+
+Browse and search:
+- Filter by category or expertise
+- Search by title/content
+- Sort by creation date
+- View author profiles
 
 ## Compatibility
 
-HABO is designed to be fully compatible with all Nostr clients and relays that support regular events (kind < 10000). The use of single-letter tags enables efficient relay-level filtering while maintaining interoperability.
+HABO is fully compatible with:
+- **NIP-99**: All listings use kind 30402 (addressable classified events)
+- **NIP-04/NIP-17**: Direct messaging for responding to listings
+- **NIP-05**: NIP-05 identifiers for author verification
+- **All Nostr clients**: Kind 30402 is a standard, published event
+
+## Future Enhancements
+
+Potential extensions while maintaining NIP-99 compatibility:
+- Payment/zap integration (NIP-57)
+- Ratings/reviews for sources
+- Featured listings with satoshi payments
+- Calendar integration for interview scheduling
+- Portfolio/credential verification

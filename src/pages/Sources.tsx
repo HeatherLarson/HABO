@@ -1,5 +1,5 @@
 import { useSeoMeta } from '@unhead/react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNostr } from '@nostrify/react';
 import { useQuery } from '@tanstack/react-query';
@@ -16,27 +16,13 @@ import { useNostrPublish } from '@/hooks/useNostrPublish';
 import { useAuthor } from '@/hooks/useAuthor';
 import { Skeleton } from '@/components/ui/skeleton';
 import { genUserName } from '@/lib/genUserName';
-import { Search, Plus, MessageSquare, Mail, Globe } from 'lucide-react';
+import { Search, Plus, MessageSquare, Globe, Mail } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
-
-const HABO_SOURCE_KIND = 9803; // Custom kind for HABO sources
-
-interface HABOSource extends NostrEvent {
-  expertise?: string[];
-  bio?: string;
-}
-
-interface SourceFormData {
-  bio: string;
-  expertise: string;
-  twitter?: string;
-  website?: string;
-}
 
 const Sources = () => {
   useSeoMeta({
-    title: 'Sources - HABO',
-    description: 'Discover expert sources in the Bitcoin space. Register as a source to help journalists with their stories.',
+    title: 'Expertise - HABO',
+    description: 'Discover Bitcoin experts offering their knowledge. Post your expertise to help journalists and creators.',
   });
 
   const { user } = useCurrentUser();
@@ -46,21 +32,24 @@ const Sources = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<SourceFormData>({
-    bio: '',
+  const [formData, setFormData] = useState({
+    title: '',
+    summary: '',
+    content: '',
     expertise: '',
     twitter: '',
     website: '',
   });
   const [selectedExpertise, setSelectedExpertise] = useState<string>('all');
 
-  // Fetch sources from Nostr
-  const { data: sources = [], isLoading } = useQuery({
+  // Fetch source/expertise listings from Nostr (kind 30402 with 'source' tag)
+  const { data: sources = [], isLoading, refetch } = useQuery({
     queryKey: ['sources', selectedExpertise],
     queryFn: async (c) => {
       const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
       const filter: Record<string, unknown> = {
-        kinds: [HABO_SOURCE_KIND],
+        kinds: [30402],
+        '#t': ['source', 'bitcoin'],
         limit: 100,
       };
 
@@ -77,14 +66,16 @@ const Sources = () => {
   const filteredSources = sources.filter((source) => {
     const searchLower = searchTerm.toLowerCase();
     const content = source.content.toLowerCase();
-    const name = source.tags.find(([name]) => name === 'name')?.[1]?.toLowerCase() || '';
-    return content.includes(searchLower) || name.includes(searchLower);
+    const title = source.tags.find(([name]) => name === 'title')?.[1]?.toLowerCase() || '';
+    return content.includes(searchLower) || title.includes(searchLower);
   });
 
-  const handleSaveProfile = () => {
-    if (!user || !formData.bio.trim() || !formData.expertise.trim()) {
+  const handleSaveProfile = useCallback(() => {
+    if (!user || !formData.title.trim() || !formData.content.trim() || !formData.expertise.trim()) {
       return;
     }
+
+    const d = `source-${user.pubkey.slice(0, 8)}-expertise`;
 
     const expertiseTags = formData.expertise
       .split(',')
@@ -92,7 +83,15 @@ const Sources = () => {
       .filter((e) => e)
       .map((exp) => ['expertise', exp]);
 
-    const tags: string[][] = [...expertiseTags];
+    const tags: string[][] = [
+      ['d', d],
+      ['title', formData.title],
+      ['summary', formData.summary || formData.title],
+      ['t', 'source'],
+      ['t', 'bitcoin'],
+      ['published_at', Math.floor(Date.now() / 1000).toString()],
+      ...expertiseTags,
+    ];
 
     if (formData.twitter) {
       tags.push(['twitter', formData.twitter]);
@@ -103,17 +102,18 @@ const Sources = () => {
 
     publishEvent(
       {
-        kind: HABO_SOURCE_KIND,
-        content: formData.bio,
+        kind: 30402,
+        content: formData.content,
         tags,
       },
       {
         onSuccess: () => {
           setIsEditDialogOpen(false);
+          refetch();
         },
       }
     );
-  };
+  }, [user, formData, publishEvent, refetch]);
 
   const expertiseAreas = [
     'all',
@@ -143,10 +143,10 @@ const Sources = () => {
                 onClick={() => navigate('/queries')}
                 className="text-slate-300 hover:text-white transition-colors font-medium text-sm"
               >
-                Queries
+                Opportunities
               </button>
               <button className="text-amber-400 hover:text-amber-300 transition-colors font-medium text-sm">
-                Sources
+                Expertise
               </button>
               <HABOLoginArea className="max-w-xs" />
             </div>
@@ -159,8 +159,8 @@ const Sources = () => {
         <div className="mb-12">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Sources</h1>
-              <p className="text-slate-400">Expert sources in the Bitcoin space. Ready to help with your stories.</p>
+              <h1 className="text-4xl font-bold text-white mb-2">Expertise</h1>
+              <p className="text-slate-400">Bitcoin experts offering their knowledge to help content creators</p>
             </div>
             {user && (
               <Button
@@ -168,7 +168,7 @@ const Sources = () => {
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg"
               >
                 <Plus className="w-5 h-5 mr-2" />
-                Update Profile
+                Post Expertise
               </Button>
             )}
           </div>
@@ -177,7 +177,7 @@ const Sources = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
             <Input
-              placeholder="Search sources..."
+              placeholder="Search expertise..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-500 rounded-lg"
@@ -186,9 +186,9 @@ const Sources = () => {
         </div>
 
         {/* Expertise Filter */}
-        <div className="mb-8">
+        <div className="mb-8 overflow-x-auto">
           <Tabs value={selectedExpertise} onValueChange={setSelectedExpertise} className="w-full">
-            <TabsList className="bg-slate-800 border border-slate-700 rounded-lg p-1 flex flex-wrap gap-1 h-auto">
+            <TabsList className="bg-slate-800 border border-slate-700 rounded-lg p-1 inline-flex">
               {expertiseAreas.map((area) => (
                 <TabsTrigger
                   key={area}
@@ -222,50 +222,70 @@ const Sources = () => {
                 <CardContent className="py-16 text-center">
                   <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                   <p className="text-slate-400 text-lg">
-                    {searchTerm ? 'No sources match your search.' : 'No sources found yet.'}
+                    {searchTerm ? 'No expertise matches your search.' : 'No expertise listings yet.'}
                   </p>
                   {user && (
                     <Button
                       onClick={() => setIsEditDialogOpen(true)}
                       className="mt-6 bg-gradient-to-r from-amber-500 to-orange-500"
                     >
-                      Be the First Source
+                      Be the First Expert
                     </Button>
                   )}
                 </CardContent>
               </Card>
             </div>
           ) : (
-            filteredSources.map((source) => <SourceCard key={source.id} source={source as HABOSource} />)
+            filteredSources.map((source) => <SourceCard key={source.id} source={source} />)
           )}
         </div>
       </div>
 
       {/* Edit Profile Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
+        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Update Your Source Profile</DialogTitle>
+            <DialogTitle>Post Your Expertise</DialogTitle>
             <DialogDescription>
-              Tell journalists what you're an expert in and how to reach you.
+              Tell journalists and content creators what you're an expert in and how to reach you.
             </DialogDescription>
           </DialogHeader>
 
           {!user ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <p className="text-slate-300">You need to log in to create a source profile</p>
+              <p className="text-slate-300">You need to log in to post expertise</p>
               <HABOLoginArea className="max-w-xs" />
             </div>
           ) : (
             <div className="space-y-6">
               <div>
+                <label className="text-sm font-semibold text-slate-200 block mb-2">Expertise Title *</label>
+                <Input
+                  placeholder="e.g., Lightning Network Developer & Educator"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-slate-200 block mb-2">Brief Summary</label>
+                <Input
+                  placeholder="One-line professional summary"
+                  value={formData.summary}
+                  onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                  className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                />
+              </div>
+
+              <div>
                 <label className="text-sm font-semibold text-slate-200 block mb-2">
-                  Bio / Credentials
+                  Bio & Credentials *
                 </label>
                 <Textarea
-                  placeholder="Tell journalists about your expertise and background..."
-                  value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Tell journalists about your expertise, experience, and background..."
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none"
                   rows={6}
                 />
@@ -273,16 +293,16 @@ const Sources = () => {
 
               <div>
                 <label className="text-sm font-semibold text-slate-200 block mb-2">
-                  Areas of Expertise (comma-separated)
+                  Areas of Expertise (comma-separated) *
                 </label>
                 <Input
-                  placeholder="e.g., Lightning Network, DeFi, Mining, Regulations"
+                  placeholder="e.g., development, layer2, economics"
                   value={formData.expertise}
                   onChange={(e) => setFormData({ ...formData, expertise: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
                 />
                 <p className="text-xs text-slate-500 mt-2">
-                  Suggested: development, economics, mining, layer2, custody, regulations, merchants, history, technical-analysis
+                  Available: development, economics, mining, layer2, custody, regulations, merchants, history, technical-analysis
                 </p>
               </div>
 
@@ -315,10 +335,10 @@ const Sources = () => {
               <div className="flex gap-4 pt-6">
                 <Button
                   onClick={handleSaveProfile}
-                  disabled={!formData.bio.trim() || !formData.expertise.trim()}
+                  disabled={!formData.title.trim() || !formData.content.trim() || !formData.expertise.trim()}
                   className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold"
                 >
-                  Save Profile
+                  Post Expertise
                 </Button>
                 <Button
                   onClick={() => setIsEditDialogOpen(false)}
@@ -336,12 +356,13 @@ const Sources = () => {
   );
 };
 
-function SourceCard({ source }: { source: HABOSource }) {
+function SourceCard({ source }: { source: NostrEvent }) {
   const author = useAuthor(source.pubkey);
   const metadata = author.data?.metadata;
   const displayName = metadata?.name ?? genUserName(source.pubkey);
   const profileImage = metadata?.picture;
 
+  const title = source.tags.find(([name]) => name === 'title')?.[1] || 'Expert';
   const expertise = source.tags
     .filter(([name]) => name === 'expertise')
     .map(([, value]) => value);
@@ -361,10 +382,11 @@ function SourceCard({ source }: { source: HABOSource }) {
             />
           )}
           <div className="flex-1">
-            <CardTitle className="text-lg text-white">{displayName}</CardTitle>
+            <CardTitle className="text-lg text-white">{title}</CardTitle>
             <CardDescription className="text-slate-400 text-xs">
               {metadata?.nip05 || `${source.pubkey.slice(0, 8)}...`}
             </CardDescription>
+            <p className="text-sm text-slate-300 mt-1 font-medium">{displayName}</p>
           </div>
         </div>
       </CardHeader>
@@ -380,26 +402,26 @@ function SourceCard({ source }: { source: HABOSource }) {
                 key={exp}
                 className="bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 capitalize text-xs"
               >
-                {exp === 'layer2' ? 'Layer 2' : exp}
+                {exp === 'layer2' ? 'Layer 2' : exp === 'technical-analysis' ? 'Analysis' : exp}
               </Badge>
             ))}
           </div>
         )}
 
-        <div className="flex gap-3 pt-4 border-t border-slate-700">
-          <button className="flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors flex-1 justify-center py-2 rounded hover:bg-slate-800">
+        <div className="flex gap-2 pt-4 border-t border-slate-700 flex-wrap">
+          <button className="flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors flex-1 justify-center py-2 rounded hover:bg-slate-800 text-sm">
             <MessageSquare className="w-4 h-4" />
-            <span className="text-sm">Message</span>
+            <span>Message</span>
           </button>
           {twitter && (
             <a
               href={`https://twitter.com/${twitter.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors flex-1 justify-center py-2 rounded hover:bg-slate-800"
+              className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors flex-1 justify-center py-2 rounded hover:bg-slate-800 text-sm"
             >
               <Globe className="w-4 h-4" />
-              <span className="text-sm">Twitter</span>
+              <span>Twitter</span>
             </a>
           )}
           {website && (
@@ -407,10 +429,10 @@ function SourceCard({ source }: { source: HABOSource }) {
               href={website}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors flex-1 justify-center py-2 rounded hover:bg-slate-800"
+              className="flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors flex-1 justify-center py-2 rounded hover:bg-slate-800 text-sm"
             >
               <Globe className="w-4 h-4" />
-              <span className="text-sm">Website</span>
+              <span>Website</span>
             </a>
           )}
         </div>

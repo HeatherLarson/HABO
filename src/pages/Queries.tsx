@@ -1,5 +1,5 @@
 import { useSeoMeta } from '@unhead/react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNostr } from '@nostrify/react';
 import { useQuery } from '@tanstack/react-query';
@@ -15,28 +15,13 @@ import { useNostrPublish } from '@/hooks/useNostrPublish';
 import { useAuthor } from '@/hooks/useAuthor';
 import { Skeleton } from '@/components/ui/skeleton';
 import { genUserName } from '@/lib/genUserName';
-import { Search, Plus, MessageSquare, Heart } from 'lucide-react';
+import { Search, Plus, MessageSquare, Heart, X } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
-
-const HABO_QUERY_KIND = 9802; // Custom kind for HABO queries
-
-interface HABOQuery extends NostrEvent {
-  title?: string;
-  category?: string;
-  deadline?: string;
-}
-
-interface QueryFormData {
-  title: string;
-  content: string;
-  category: string;
-  deadline: string;
-}
 
 const Queries = () => {
   useSeoMeta({
-    title: 'Queries - HABO',
-    description: 'Browse and post queries for Bitcoin content creators looking for expert sources.',
+    title: 'Opportunities - HABO',
+    description: 'Browse opportunities for Bitcoin content. Post queries seeking sources and expertise.',
   });
 
   const { user } = useCurrentUser();
@@ -46,21 +31,23 @@ const Queries = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<QueryFormData>({
+  const [formData, setFormData] = useState({
     title: '',
+    summary: '',
     content: '',
-    category: 'general',
+    category: 'interview',
     deadline: '',
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Fetch queries from Nostr
-  const { data: queries = [], isLoading, isFetching } = useQuery({
+  // Fetch query listings from Nostr (kind 30402 with 'query' tag)
+  const { data: queries = [], isLoading, refetch } = useQuery({
     queryKey: ['queries', selectedCategory],
     queryFn: async (c) => {
       const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
       const filter: Record<string, unknown> = {
-        kinds: [HABO_QUERY_KIND],
+        kinds: [30402],
+        '#t': ['query', 'bitcoin'],
         limit: 50,
       };
 
@@ -86,10 +73,16 @@ const Queries = () => {
       return;
     }
 
+    const d = `query-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
     const tags: string[][] = [
+      ['d', d],
       ['title', formData.title],
+      ['summary', formData.summary || formData.title],
       ['category', formData.category],
-      ['t', formData.category], // For relay-level filtering
+      ['t', 'query'],
+      ['t', 'bitcoin'],
+      ['published_at', Math.floor(Date.now() / 1000).toString()],
     ];
 
     if (formData.deadline) {
@@ -98,25 +91,25 @@ const Queries = () => {
 
     publishEvent(
       {
-        kind: HABO_QUERY_KIND,
+        kind: 30402,
         content: formData.content,
         tags,
       },
       {
         onSuccess: () => {
           setIsCreateDialogOpen(false);
-          setFormData({ title: '', content: '', category: 'general', deadline: '' });
+          setFormData({ title: '', summary: '', content: '', category: 'interview', deadline: '' });
+          refetch();
         },
       }
     );
-  }, [user, formData, publishEvent]);
+  }, [user, formData, publishEvent, refetch]);
 
   const categories = [
     'all',
-    'general',
-    'news',
     'interview',
     'podcast',
+    'article',
     'documentary',
     'research',
     'analysis',
@@ -134,13 +127,13 @@ const Queries = () => {
             </button>
             <div className="flex items-center gap-4">
               <button className="text-amber-400 hover:text-amber-300 transition-colors font-medium text-sm">
-                Queries
+                Opportunities
               </button>
               <button
                 onClick={() => navigate('/sources')}
                 className="text-slate-300 hover:text-white transition-colors font-medium text-sm"
               >
-                Sources
+                Expertise
               </button>
               <HABOLoginArea className="max-w-xs" />
             </div>
@@ -153,8 +146,8 @@ const Queries = () => {
         <div className="mb-12">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Queries</h1>
-              <p className="text-slate-400">Find journalists and creators looking for your expertise</p>
+              <h1 className="text-4xl font-bold text-white mb-2">Opportunities</h1>
+              <p className="text-slate-400">Journalists and creators seeking Bitcoin sources and contributors</p>
             </div>
             {user && (
               <Button
@@ -162,7 +155,7 @@ const Queries = () => {
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-lg"
               >
                 <Plus className="w-5 h-5 mr-2" />
-                Post Query
+                Post Opportunity
               </Button>
             )}
           </div>
@@ -171,7 +164,7 @@ const Queries = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
             <Input
-              placeholder="Search queries..."
+              placeholder="Search opportunities..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-500 rounded-lg"
@@ -180,14 +173,14 @@ const Queries = () => {
         </div>
 
         {/* Category Filter */}
-        <div className="mb-8">
+        <div className="mb-8 overflow-x-auto">
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            <TabsList className="bg-slate-800 border border-slate-700 rounded-lg p-1">
+            <TabsList className="bg-slate-800 border border-slate-700 rounded-lg p-1 inline-flex">
               {categories.map((cat) => (
                 <TabsTrigger
                   key={cat}
                   value={cat}
-                  className="capitalize data-[state=active]:bg-amber-500 data-[state=active]:text-white"
+                  className="capitalize data-[state=active]:bg-amber-500 data-[state=active]:text-white text-sm"
                 >
                   {cat}
                 </TabsTrigger>
@@ -218,7 +211,7 @@ const Queries = () => {
               <CardContent className="py-16 text-center">
                 <MessageSquare className="w-12 h-12 text-slate-600 mx-auto mb-4" />
                 <p className="text-slate-400 text-lg">
-                  {searchTerm ? 'No queries match your search.' : 'No queries found. Check back soon!'}
+                  {searchTerm ? 'No opportunities match your search.' : 'No opportunities posted yet.'}
                 </p>
                 {user && !searchTerm && (
                   <Button
@@ -231,34 +224,44 @@ const Queries = () => {
               </CardContent>
             </Card>
           ) : (
-            filteredQueries.map((query) => <QueryCard key={query.id} query={query as HABOQuery} />)
+            filteredQueries.map((query) => <QueryCard key={query.id} query={query} />)
           )}
         </div>
       </div>
 
       {/* Create Query Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
+        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Post a Query</DialogTitle>
+            <DialogTitle>Post an Opportunity</DialogTitle>
             <DialogDescription>
-              Describe what you're looking for. Sources on HABO will see your query and respond if they're a good fit.
+              Tell sources what you're looking for. They can respond via direct message on Nostr.
             </DialogDescription>
           </DialogHeader>
 
           {!user ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <p className="text-slate-300">You need to log in to post a query</p>
+              <p className="text-slate-300">You need to log in to post an opportunity</p>
               <HABOLoginArea className="max-w-xs" />
             </div>
           ) : (
             <div className="space-y-6">
               <div>
-                <label className="text-sm font-semibold text-slate-200 block mb-2">Query Title</label>
+                <label className="text-sm font-semibold text-slate-200 block mb-2">Opportunity Title *</label>
                 <Input
-                  placeholder="e.g., Bitcoin Layer 2 Solutions Expert for Podcast"
+                  placeholder="e.g., Bitcoin Lightning Network Expert for Podcast"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-slate-200 block mb-2">Brief Summary</label>
+                <Input
+                  placeholder="One-line summary for listings"
+                  value={formData.summary}
+                  onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
                 />
               </div>
@@ -270,20 +273,21 @@ const Queries = () => {
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg"
                 >
-                  {categories.filter((c) => c !== 'all').map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </option>
-                  ))}
+                  <option value="interview">Interview Guest</option>
+                  <option value="podcast">Podcast Contributor</option>
+                  <option value="article">Article Source</option>
+                  <option value="documentary">Documentary Subject</option>
+                  <option value="research">Research Collaboration</option>
+                  <option value="analysis">Technical Analysis</option>
                 </select>
               </div>
 
               <div>
                 <label className="text-sm font-semibold text-slate-200 block mb-2">
-                  Description
+                  Detailed Description *
                 </label>
                 <Textarea
-                  placeholder="Describe what you're looking for in detail..."
+                  placeholder="Describe what you're looking for in detail. What's the project? What expertise do you need? What's the timeline?"
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white placeholder-slate-500 resize-none"
@@ -293,7 +297,7 @@ const Queries = () => {
 
               <div>
                 <label className="text-sm font-semibold text-slate-200 block mb-2">
-                  Deadline (Optional)
+                  Response Deadline (Optional)
                 </label>
                 <Input
                   type="date"
@@ -309,7 +313,7 @@ const Queries = () => {
                   disabled={!formData.title.trim() || !formData.content.trim()}
                   className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold"
                 >
-                  Post Query
+                  Post Opportunity
                 </Button>
                 <Button
                   onClick={() => setIsCreateDialogOpen(false)}
@@ -327,9 +331,9 @@ const Queries = () => {
   );
 };
 
-function QueryCard({ query }: { query: HABOQuery }) {
+function QueryCard({ query }: { query: NostrEvent }) {
   const author = useAuthor(query.pubkey);
-  const title = query.tags.find(([name]) => name === 'title')?.[1] || 'Untitled Query';
+  const title = query.tags.find(([name]) => name === 'title')?.[1] || 'Untitled';
   const category = query.tags.find(([name]) => name === 'category')?.[1] || 'general';
   const deadline = query.tags.find(([name]) => name === 'deadline')?.[1];
 
@@ -359,21 +363,21 @@ function QueryCard({ query }: { query: HABOQuery }) {
               <p className="text-xs text-slate-500">{createdDate}</p>
             </div>
           </div>
-          <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full capitalize">
+          <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full capitalize font-medium">
             {category}
           </span>
         </div>
         <CardTitle className="text-xl text-white">{title}</CardTitle>
-        <CardDescription className="text-slate-400 line-clamp-2">
-          {query.content}
-        </CardDescription>
       </CardHeader>
       <CardContent>
+        <p className="text-slate-300 text-sm mb-6 line-clamp-3">
+          {query.content}
+        </p>
         <div className="flex items-center justify-between">
           <div className="flex gap-6">
             <button className="flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors">
               <MessageSquare className="w-4 h-4" />
-              <span className="text-sm">Respond</span>
+              <span className="text-sm">Message</span>
             </button>
             <button className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors">
               <Heart className="w-4 h-4" />

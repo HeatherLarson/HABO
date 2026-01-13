@@ -32,13 +32,13 @@ const Index = () => {
                 onClick={() => navigate('/queries')}
                 className="text-slate-300 hover:text-white transition-colors font-medium text-sm"
               >
-                Queries
+                Opportunities
               </button>
               <button
                 onClick={() => navigate('/sources')}
                 className="text-slate-300 hover:text-white transition-colors font-medium text-sm"
               >
-                Sources
+                Expertise
               </button>
               <HABOLoginArea className="max-w-xs" />
             </div>
@@ -56,10 +56,10 @@ const Index = () => {
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight">
-            Connect With <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Bitcoin Sources</span>
+            Bitcoin Content <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Marketplace</span>
           </h1>
           <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-            HABO connects journalists, reporters, and content creators in the Bitcoin space with expert sources for stories. No email lists. Pure Nostr.
+            Post opportunities. Offer expertise. Connect with collaborators. A peer-to-peer marketplace for Bitcoin content creators built on Nostr.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -69,7 +69,7 @@ const Index = () => {
                   onClick={() => navigate('/queries')}
                   className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-6 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
                 >
-                  Browse Queries
+                  Browse Opportunities
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
                 <Button
@@ -85,7 +85,7 @@ const Index = () => {
                 onClick={() => {}}
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-6 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
               >
-                Get Started
+                Join the Marketplace
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             )}
@@ -94,11 +94,11 @@ const Index = () => {
           <p className="text-slate-400 text-sm">
             {user ? (
               <>
-                Ready to share your expertise? <button onClick={() => navigate('/sources')} className="text-amber-400 hover:text-amber-300 font-semibold">Become a Source →</button>
+                Ready to share your expertise? <button onClick={() => navigate('/sources')} className="text-amber-400 hover:text-amber-300 font-semibold">Post Your Expertise →</button>
               </>
             ) : (
               <>
-                Login with Nostr to publish queries and offer your expertise as a source
+                Login with Nostr to post opportunities and offer your expertise
               </>
             )}
           </p>
@@ -108,41 +108,41 @@ const Index = () => {
       {/* Features Section */}
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Feature 1: Publish Queries */}
+          {/* Feature 1: Post Opportunities */}
           <Card className="border-slate-800 bg-slate-900/50 backdrop-blur hover:border-amber-500/50 transition-all hover:shadow-lg hover:shadow-amber-500/10">
             <CardContent className="p-8">
               <div className="mb-4 p-3 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-lg w-fit">
                 <Zap className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Publish Queries</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Post Opportunities</h3>
               <p className="text-slate-400">
-                Post what you're looking for in real-time. Tell sources exactly what you need for your story, podcast, or documentary.
+                Publish what you're seeking: interview guests, podcast contributors, research partners, or article sources. Reach Bitcoin experts directly.
               </p>
             </CardContent>
           </Card>
 
-          {/* Feature 2: Find Expert Sources */}
+          {/* Feature 2: Offer Expertise */}
           <Card className="border-slate-800 bg-slate-900/50 backdrop-blur hover:border-amber-500/50 transition-all hover:shadow-lg hover:shadow-amber-500/10">
             <CardContent className="p-8">
               <div className="mb-4 p-3 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-lg w-fit">
                 <Users className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Find Expert Sources</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Offer Your Expertise</h3>
               <p className="text-slate-400">
-                Discover bitcoin experts, developers, analysts, and thought leaders ready to share their knowledge for your content.
+                Register your knowledge in development, economics, mining, regulations, and more. Get discovered by journalists and content creators.
               </p>
             </CardContent>
           </Card>
 
-          {/* Feature 3: Powered by Nostr */}
+          {/* Feature 3: Powered by Nostr & NIP-99 */}
           <Card className="border-slate-800 bg-slate-900/50 backdrop-blur hover:border-amber-500/50 transition-all hover:shadow-lg hover:shadow-amber-500/10">
             <CardContent className="p-8">
               <div className="mb-4 p-3 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-lg w-fit">
                 <Lightbulb className="w-6 h-6 text-amber-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Powered by Nostr</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Built on Open Standards</h3>
               <p className="text-slate-400">
-                Built on the open Nostr protocol. No corporate gatekeepers. Pure peer-to-peer connection between creators and sources.
+                Powered by Nostr and NIP-99. No corporate gatekeepers. Fully peer-to-peer. Your listings are yours to control.
               </p>
             </CardContent>
           </Card>
@@ -153,23 +153,23 @@ const Index = () => {
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <Card className="border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur-xl">
           <CardContent className="p-12 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">Start Connecting Today</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Start Collaborating Today</h2>
             <p className="text-slate-300 mb-8">
-              Whether you're a journalist seeking sources or an expert wanting to share your knowledge, HABO is where Bitcoin content creators meet.
+              Whether you're posting an opportunity or offering your expertise, HABO is the Bitcoin content creator marketplace built on Nostr.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 onClick={() => navigate('/queries')}
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-3 font-semibold rounded-lg"
               >
-                View Queries
+                Browse Opportunities
               </Button>
               <Button
                 onClick={() => navigate('/sources')}
                 variant="outline"
                 className="border-slate-400 hover:bg-slate-800 text-white px-8 py-3 font-semibold rounded-lg"
               >
-                Explore Sources
+                Find Experts
               </Button>
             </div>
           </CardContent>
@@ -185,8 +185,8 @@ const Index = () => {
               <span className="text-xs text-amber-500 font-semibold">BITCOIN SOURCES</span>
             </div>
             <div className="flex gap-8 text-sm text-slate-400">
-              <button onClick={() => navigate('/queries')} className="hover:text-white transition-colors">Queries</button>
-              <button onClick={() => navigate('/sources')} className="hover:text-white transition-colors">Sources</button>
+              <button onClick={() => navigate('/queries')} className="hover:text-white transition-colors">Opportunities</button>
+              <button onClick={() => navigate('/sources')} className="hover:text-white transition-colors">Expertise</button>
               <a href="https://shakespeare.diy" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Vibed with Shakespeare</a>
             </div>
             <div className="text-xs text-slate-500">
